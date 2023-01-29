@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import { networkInterfaces, hostname } from 'os';
+import cors from 'cors';
 
 import REDIS from 'ioredis';
 const app = express();
@@ -21,11 +22,14 @@ app.get('/', (req, res, next) => {
   });
 });
 
+app.use(cors());
 app.get('/second', (req, res, next) => {
   res.send("<p>This is a dummy output for the alternative URL /second</p>");
 });
 
-createServer(app).listen(80, function () {
+app.use(express.static('../frontend/public'));
+
+createServer(app).listen(8080, function () {
   let ips = networkInterfaces();
-  console.log('Listening on port ' + (80) + " on host " + hostname() + " with IP " + ips["eth0"]![0]["address"]);
+  console.log('Listening on port ' + (8080) + " on host " + hostname() + " with IP " + ips["eth0"]![0]["address"]);
 });

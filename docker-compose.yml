@@ -1,15 +1,20 @@
 version: "3"
 
 services:
-  node:
+  backend:
     build: ./node.js
     links:
          - redis
     ports:
-         - "80:80"
+         - "8080:8080"
     volumes:
          - ./node.js:/src
-
+  frontend:
+    build: ./frontend
+    ports:
+         - "3000:3000"
+    volumes:
+         - ./frontend:/src
   redis:
      image: redis:latest
      ports:

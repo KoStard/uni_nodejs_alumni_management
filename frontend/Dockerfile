@@ -7,9 +7,6 @@ RUN apt-get update && apt-get -y dist-upgrade && \
     curl -sL https://deb.nodesource.com/setup_19.x | sudo bash - && \
     apt-get -y install python3 build-essential nodejs gcc g++ make
 
-# Install tsc-watch
-RUN npm install -g tsc-watch
-
 # Provides cached layer for node_modules
 ADD package.json /tmp/package.json
 RUN cd /tmp && npm install
@@ -20,7 +17,7 @@ WORKDIR /src
 ADD . /src
 
 # Expose port
-EXPOSE  8080
+EXPOSE 3000
 
-# Run app using tsc-watch
-CMD ["tsc-watch", "--onSuccess", "node dist/app.js"]
+# Run app using nodemon
+CMD ["npm", "run", "start"]
