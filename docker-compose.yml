@@ -14,7 +14,7 @@ services:
     ports:
          - "3000:3000"
     volumes:
-         - ./frontend:/src
+         - ./frontend/src/:/src/src/
   redis:
      image: redis:latest
      ports:

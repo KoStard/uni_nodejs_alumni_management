@@ -2,8 +2,10 @@ import express from 'express';
 import { createServer } from 'http';
 import { networkInterfaces, hostname } from 'os';
 import cors from 'cors';
+import { AlumniRouter } from './alumniRouter';
 
 import REDIS from 'ioredis';
+import { AlumniAccessor } from './accessors/alumniAccessor';
 const app = express();
 const client = new REDIS({
   host: 'redis',
@@ -23,11 +25,8 @@ app.get('/', (req, res, next) => {
 });
 
 app.use(cors());
-app.get('/second', (req, res, next) => {
-  res.send("<p>This is a dummy output for the alternative URL /second</p>");
-});
-
-app.use(express.static('../frontend/public'));
+app.use(express.json());
+app.use("/alumni", new AlumniRouter(new AlumniAccessor(client)).router);
 
 createServer(app).listen(8080, function () {
   let ips = networkInterfaces();
