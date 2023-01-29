@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  node:
+    build: ./node.js
+    links:
+         - redis
+    ports:
+         - "80:80"
+    volumes:
+         - ./node.js:/src
+
+  redis:
+     image: redis:latest
+     ports:
+          - 6379:6379
