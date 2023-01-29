@@ -1,4 +1,5 @@
 import express, { NextFunction, Request, Response, Router } from 'express';
+import asyncHandler from 'express-async-handler';
 import { check, validationResult } from 'express-validator';
 import { AlumniAccessor } from './accessors/alumniAccessor';
 import { Alumnus } from './accessors/alumnus';
@@ -10,8 +11,8 @@ export class AlumniRouter {
     public constructor(alumniAccessor: AlumniAccessor) {
         this.router = express.Router();
         this.alumniAccessor = alumniAccessor;
-        this.router.get('/', (req: Request, res: Response, next: NextFunction) => this.getAlumni(req, res, next));
-        this.router.get('/:id', [check('id').isNumeric()], (req: Request, res: Response, next: NextFunction) => this.getAlumnus(req, res, next));
+        this.router.get('/', asyncHandler(this.getAlumni));
+        this.router.get('/:id', [check('id').isNumeric()], asyncHandler(this.getAlumnus));
         this.router.post('/', [
             check('fullName').isString().not().isEmpty(),
             check('currentEmployer').isString(),
@@ -19,7 +20,7 @@ export class AlumniRouter {
             check('studyStartDate').isDate().not().isEmpty(),
             check('studyEndDate').isDate().not().isEmpty(),
             check('description').isString(),
-        ], (req: Request, res: Response, next: NextFunction) => this.addAlumnus(req, res, next));
+        ], asyncHandler(this.addAlumnus));
         this.router.put('/', [
             check('id').isNumeric().not().isEmpty(),
             check('fullName').isString().not().isEmpty(),
@@ -28,32 +29,30 @@ export class AlumniRouter {
             check('studyStartDate').isDate().not().isEmpty(),
             check('studyEndDate').isDate().not().isEmpty(),
             check('description').isString(),
-        ], (req: Request, res: Response, next: NextFunction) => this.updateAlumnus(req, res, next));
+        ], asyncHandler(this.updateAlumnus));
         // If there are records with invalid IDs, we still allow it to be deleted
-        this.router.delete('/:id', (req: Request, res: Response, next: NextFunction) => this.deleteAlumnus(req, res, next));
+        this.router.delete('/:id', asyncHandler(this.deleteAlumnus));
     }
 
-    getAlumni(req: Request, res: Response, next: NextFunction) {
+    getAlumni = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        this.alumniAccessor.getAlumni().then((alumni) => {
-            res.send(alumni);
-        });
+        const alumni = await this.alumniAccessor.getAlumni();
+        res.send(alumni);
     }
 
-    getAlumnus(req: Request, res: Response, next: NextFunction) {
+    getAlumnus = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        this.alumniAccessor.getAlumnus(parseInt(req.params.id)).then((alumnus) => {
-            res.send(alumnus);
-        });
+        const alumnus = this.alumniAccessor.getAlumnus(parseInt(req.params.id));
+        res.send(alumnus);
     }
 
-    async addAlumnus(req: Request, res: Response, next: NextFunction) {
+    addAlumnus = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
@@ -62,7 +61,7 @@ export class AlumniRouter {
         res.send({ok: true});
     }
 
-    async updateAlumnus(req: Request, res: Response, next: NextFunction) {
+    updateAlumnus = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
@@ -71,7 +70,7 @@ export class AlumniRouter {
         res.send({ok: true});
     }
 
-    async deleteAlumnus(req: Request, res: Response, next: NextFunction) {
+    deleteAlumnus = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
@@ -81,7 +80,7 @@ export class AlumniRouter {
     }
 
     rawToAlumnus(rawAlumnus: any): Alumnus {
-        return {
+        const alumnus: Alumnus = {
             id: parseInt(rawAlumnus.id),
             fullName: rawAlumnus.fullName,
             currentEmployer: rawAlumnus.currentEmployer,
@@ -90,6 +89,10 @@ export class AlumniRouter {
             studyEndDate: new Date(rawAlumnus.studyEndDate),
             description: rawAlumnus.description,
         };
+        if (alumnus.studyStartDate > alumnus.studyEndDate) {
+            throw new Error('Study start date cannot be after study end date');
+        }
+        return alumnus;
     }
 }
 

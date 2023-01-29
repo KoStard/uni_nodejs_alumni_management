@@ -123,7 +123,11 @@ export default class App extends Component<{}, State> {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(alumnus, dateReplacer)
-        })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error("Could not create alumnus");
+            }
+        });
         this.fetchAlumni();
     }
 
@@ -134,6 +138,10 @@ export default class App extends Component<{}, State> {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(alumnus, dateReplacer)
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error("Could not update alumnus");
+            }
         });
         this.fetchAlumni();
     }
@@ -141,6 +149,10 @@ export default class App extends Component<{}, State> {
     async deleteAlumnus(alumnus: Alumnus) {
         await fetch(this.generateBackendUrl('alumni/' + alumnus.id), {
             method: 'DELETE'
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error("Could not delete alumnus");
+            }
         });
         this.fetchAlumni();
     }
@@ -245,25 +257,7 @@ export class AlumniEditPopup extends Component<AlumniEditPopupProps, AlumniEditP
         this.props.closePopup();
     }
 
-    validate(event: any) {
-        const form = event.target;
-        if (form.studyStartDate.value
-            && form.studyEndDate.value
-            && form.studyStartDate.value > form.studyEndDate.value) {
-            form.studyEndDate.setCustomValidity("Study end date must be after study start date");
-            form.studyEndDate.reportValidity();
-            return false;
-        } else {
-            form.studyEndDate.setCustomValidity("");
-            form.studyEndDate.reportValidity();
-        }
-        return true;
-    }
-
-    saveAlumnus(event: any) {
-        if (!this.validate(event)) {
-            return;
-        }
+    async saveAlumnus(event: any) {
         const alumnus: Alumnus = {
             id: event.target.id.value,
             fullName: event.target.fullName.value,
@@ -274,9 +268,9 @@ export class AlumniEditPopup extends Component<AlumniEditPopupProps, AlumniEditP
             description: event.target.description.value
         };
         if (this.state.createMode) {
-            this.props.createAlumnus(alumnus);
+            await this.props.createAlumnus(alumnus);
         } else {
-            this.props.updateAlumnus(alumnus);
+            await this.props.updateAlumnus(alumnus);
         }
         this.props.closePopup();
     }
